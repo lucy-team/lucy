@@ -1,7 +1,5 @@
 val ktorVersion: String by ext
 val logbackVersion: String by ext
-val postgresqlVersion: String by ext
-val hikariVersion: String by ext
 val kodeinVersion: String by ext
 
 plugins {
@@ -15,7 +13,7 @@ application {
 
 dependencies {
     implementation(kotlin("stdlib"))
-    implementation(project(":lucy-common"))
+    implementation(project(":lucy-database"))
 
     implementation("io.ktor:ktor-server-netty:$ktorVersion")
     implementation("ch.qos.logback:logback-classic:$logbackVersion")
@@ -23,9 +21,6 @@ dependencies {
     implementation("io.ktor:ktor-jackson:$ktorVersion")
 
     implementation("org.kodein.di:kodein-di-framework-ktor-server-jvm:$kodeinVersion")
-
-    implementation("com.zaxxer:HikariCP:$hikariVersion") // JDBC Connection Pool
-    implementation("org.postgresql:postgresql:$postgresqlVersion") // JDBC Connector for PostgreSQL
 
     testImplementation("io.ktor:ktor-server-tests:$ktorVersion")
 }

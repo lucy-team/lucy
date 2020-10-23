@@ -27,9 +27,16 @@ allprojects {
 }
 
 subprojects {
+    apply(plugin = "java")
+    apply(plugin = "kotlin")
+    apply(plugin = "kotlin-kapt")
+
     tasks.withType<KotlinCompile> {
         kotlinOptions {
-            freeCompilerArgs = listOf("-Xjsr305=strict")
+            freeCompilerArgs = listOf("-Xjsr305=strict",
+                "-XXLanguage:+InlineClasses",
+                "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                "-Xopt-in=kotlin.Experimental")
             jvmTarget = "1.8"
             incremental = false
         }
