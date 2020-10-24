@@ -1,42 +1,39 @@
 package model.music
 
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
-import com.sedmelluq.discord.lavaplayer.player.AudioPlayerManager
-import command.context.LucyCommandEvent
 import discord4j.common.util.Snowflake
-import discord4j.core.`object`.entity.Message
+import discord4j.core.GatewayDiscordClient
+import discord4j.core.`object`.entity.channel.MessageChannel
 import discord4j.voice.VoiceConnection
 import reactor.core.Disposable
 import reactor.core.publisher.Mono
 import reactor.core.scheduler.Schedulers
 import java.time.Duration
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicLong
 import java.util.concurrent.atomic.AtomicReference
 
-class GuildMusic(val guildId: Snowflake, manager: AudioPlayerManager, val event: LucyCommandEvent): PlaylistInterface {
 
-    var player: AudioPlayer
-        private set
+class GuildMusic(
+    val client: GatewayDiscordClient,
+    private val guildId: Snowflake,
+    val playlist: Playlist,
+    private val musicManager: MusicManager
+) {
 
-    var playlist: Playlist
-        private set
+    private val LEAVE_DELAY = Duration.ofMinutes(1)
 
-    var provider: LavaPlayerAudioProvider
-        private set
-
+    private val listeners: ConcurrentHashMap<AudioLoadResultListener, Future<Void>> = ConcurrentHashMap()
+    var isWaitingForChoice = AtomicBoolean(false)
+    var messageChannelId = AtomicLong()
+    var djId = AtomicLong()
     private var leavingTask: AtomicReference<Disposable?> = AtomicReference(null)
 
-    init {
-        player = manager.createPlayer()
-        playlist = Playlist(player, event)
-        player.addListener(playlist)
-        playlist.listener = this
-        provider = LavaPlayerAudioProvider(player)
-    }
-
     fun handleLeave() {
-        leavingTask.set(Mono.delay(Duration.ofSeconds(10), Schedulers.boundedElastic())
+        leavingTask.set(Mono.delay(LEAVE_DELAY, Schedulers.boundedElastic())
             .filter { isLeavingScheduled() }
-            .map { event.client.voiceConnectionRegistry }
+            .map { client.voiceConnectionRegistry }
             .flatMap { it.getVoiceConnection(guildId) }
             .flatMap(VoiceConnection::disconnect)
             .subscribe())
@@ -44,6 +41,44 @@ class GuildMusic(val guildId: Snowflake, manager: AudioPlayerManager, val event:
 
     fun isLeavingScheduled(): Boolean {
         return leavingTask.get() != null && !leavingTask.get()!!.isDisposed
+    }
+
+    fun addAudioLoadResultListener(listener: AudioLoadResultListener, url: String) {
+        listeners[listener] = musicManager.loadItemOrdered(guildId.asLong(), url, listener)
+    }
+
+    fun removeAudioLoadResultListener(listener: AudioLoadResultListener): Mono<Void> {
+        listeners.remove(listener)
+        // If there is no music playing and nothing is loading, leave the voice channel
+        return if (playlist.isStopped() && listeners.values.stream().allMatch { it.isDone }) {
+            client.voiceConnectionRegistry
+                .getVoiceConnection(guildId)
+                .flatMap { vc -> vc.disconnect() }
+        } else Mono.empty()
+    }
+
+    fun end(): Mono<Void> {
+        return client.voiceConnectionRegistry
+            .getVoiceConnection(guildId)
+            .flatMap { vc -> vc.disconnect() }
+            .then(channel)
+            .flatMap { channel -> channel.createMessage("Se acabo la playlist uwu.") }
+            .then()
+    }
+
+    fun play(authorId: Snowflake, url: String, channelId: Long): Mono<Void> {
+        if (isWaitingForChoice.get()) {
+            if (djId.get() == authorId.asLong()) {
+                return Mono.error(Exception("Se esta seleccionado"))
+            }
+        }
+
+        return Mono.create {
+            val resultListener = AudioLoadResultListener(guildId, authorId, url, false, musicManager)
+
+            messageChannelId.set(channelId)
+            addAudioLoadResultListener(resultListener, url)
+        }
     }
 
     fun cancelLeave() {
@@ -54,12 +89,11 @@ class GuildMusic(val guildId: Snowflake, manager: AudioPlayerManager, val event:
 
     fun destroy() {
         cancelLeave()
-        player.destroy()
-        playlist.listener = null
+        listeners.values.forEach { it.cancel(true) }
+        listeners.clear()
+        playlist.destroy()
     }
 
-    override fun didEmpty() {
-        handleLeave()
-    }
+    val channel get() = this.client.getChannelById(Snowflake.of(messageChannelId.get())).cast(MessageChannel::class.java)
 
 }

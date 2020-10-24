@@ -23,11 +23,11 @@ suspend fun main() = bot("NzI3MDAyMDcxMzQ5MzI5OTMw.Xvlffg.Q9cI34neuqdKhW7aeQAP4a
 
         if (userId == client.selfId) {
             if (!current.channelId.isPresent && old.isPresent) {
-                music.remove(guildId.asString())
+                music.destroyConnection(guildId)
             }
         } else {
             Mono.defer {
-                Mono.justOrEmpty(music[guildId.asString()])
+                Mono.justOrEmpty(music.getGuildMusic(guildId))
                     .flatMap { guildMusic ->
                         memberCount(this, guildId)
                             .filter { memberCount -> (memberCount == 0L) != guildMusic.isLeavingScheduled() }
@@ -36,11 +36,11 @@ suspend fun main() = bot("NzI3MDAyMDcxMzQ5MzI5OTMw.Xvlffg.Q9cI34neuqdKhW7aeQAP4a
                                 println("count: ${memberCount}")
                                 if (memberCount == 0L && !guildMusic.isLeavingScheduled()) {
                                     println("1.1")
-                                    guildMusic.player.isPaused = true
+                                    guildMusic.playlist.player.isPaused = true
                                     guildMusic.handleLeave()
                                 } else if (memberCount != 0L && guildMusic.isLeavingScheduled()) {
                                     println("1.2")
-                                    guildMusic.player.isPaused = false
+                                    guildMusic.playlist.player.isPaused = false
                                     guildMusic.cancelLeave()
                                 }
                             }

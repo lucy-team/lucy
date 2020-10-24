@@ -16,6 +16,8 @@ interface LucyEvent {
 
     val author get() = message.author.get()
 
+    val member get() = event.member.get()
+
     val channel get() = message.channel
 
     val guild get() = message.guild
@@ -25,17 +27,17 @@ interface LucyEvent {
     }
 
     companion object {
-        operator fun invoke(event: MessageCreateEvent) = object : LucyEvent {
+        operator fun invoke(event: MessageCreateEvent) = object: LucyEvent {
             override val event: MessageCreateEvent = event
         }
     }
 
 }
 
-suspend inline fun LucyEvent.respond(crossinline builder: MessageCreateSpec.() -> Unit): Message {
-    return channel.awaitSingle().createMessage { it.apply(builder) }.awaitSingle()
+suspend inline fun LucyEvent.respond(noinline builder: MessageCreateSpec.() -> Unit): Message {
+    return channel.awaitSingle().createMessage(builder).awaitSingle()
 }
 
-suspend inline fun LucyEvent.respondEmbed(crossinline builder: EmbedCreateSpec.() -> Unit): Message {
-    return channel.awaitSingle().createEmbed { it.apply(builder) }.awaitSingle()
+suspend inline fun LucyEvent.respondEmbed(noinline builder: EmbedCreateSpec.() -> Unit): Message {
+    return channel.awaitSingle().createEmbed(builder).awaitSingle()
 }

@@ -6,7 +6,7 @@ import com.sedmelluq.discord.lavaplayer.track.playback.MutableAudioFrame
 import discord4j.voice.AudioProvider
 import java.nio.ByteBuffer
 
-class LavaPlayerAudioProvider(val player: AudioPlayer): AudioProvider(audioBuffer) {
+class LavaPlayerAudioProvider(private val player: AudioPlayer): AudioProvider(audioBuffer) {
 
     private val frame = MutableAudioFrame()
 

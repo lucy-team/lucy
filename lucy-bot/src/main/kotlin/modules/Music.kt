@@ -12,35 +12,32 @@ import command.module.module
 import command.respondEmbed
 import discord4j.core.`object`.VoiceState
 import discord4j.core.`object`.entity.Member
-import discord4j.voice.VoiceConnection
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.reactive.awaitSingle
 import model.music.MusicManager
 import reactor.core.publisher.Mono
 import kotlin.math.ceil
+
 
 fun musicCommands(music: MusicManager) = module("music") {
 
     command("play") {
 
         invoke(StringArgument) { url ->
-            val guild = event.guildId.get().asString()
+            val guild = guild.awaitSingle()
 
-            music.put(guild, this)
-
-            Mono.justOrEmpty(music[guild])
-                .flatMap {
-                    Mono.justOrEmpty(event.member)
-                        .flatMap(Member::getVoiceState)
-                        .flatMap(VoiceState::getChannel)
-                        .flatMap { channel ->
-                            channel.join { spec ->
-                                spec.setSelfDeaf(true)
-                                spec.setProvider(it.provider)
-                            }
+            Mono.justOrEmpty(event.member)
+                .flatMap(Member::getVoiceState)
+                .flatMap(VoiceState::getChannel)
+                .flatMap { channel ->
+                    music.join(client, guild.id, channel.id)
+                        .flatMap { guildMusic ->
+                            guildMusic.play(author.id, url, message.channelId.asLong())
                         }
+                }.doOnError {
+                    println(it)
                 }.awaitSingle()
-
-            music.play(guild, url, this)
         }
     }
 
@@ -48,11 +45,12 @@ fun musicCommands(music: MusicManager) = module("music") {
         alias("resume")
 
         invoke {
-            event.guildId.ifPresent {
-                music[it.asString()]?.let { guildMusic ->
-                    guildMusic.player.isPaused = !guildMusic.player.isPaused
-                }
-            }
+            val guild = guild.awaitSingle()
+
+            Mono.justOrEmpty(music.getGuildMusic(guild.id))
+                    .doOnNext { guildMusic ->
+                        guildMusic.playlist.player.isPaused = !guildMusic.playlist.player.isPaused
+                    }.awaitSingle()
         }
     }
 
@@ -60,9 +58,16 @@ fun musicCommands(music: MusicManager) = module("music") {
         alias("next", "jump")
 
         invoke(OptionalIntArgument) { idx ->
-            event.guildId.ifPresent { id ->
-                music[id.asString()]?.playlist?.nextTrack(idx ?: 1)
-            }
+            val guild = guild.awaitSingle()
+
+            Mono.justOrEmpty(music.getGuildMusic(guild.id))
+                    .doOnNext { guildMusic ->
+                        val playlist = guildMusic.playlist
+                        if (idx == null)
+                            playlist.nextTrack()
+                        else
+                            playlist.skipTo(idx)
+                    }.awaitSingle()
         }
     }
 
@@ -70,7 +75,8 @@ fun musicCommands(music: MusicManager) = module("music") {
     command("current") {
         invoke {
             if (event.guildId.isPresent) {
-                music[event.guildId.get().asString()]?.playlist?.showCurrent()
+                // TODO: Falta este uwu
+                //music[event.guildId.get().asString()]?.playlist?.showCurrent()
             }
         }
     }
@@ -81,7 +87,7 @@ fun musicCommands(music: MusicManager) = module("music") {
 
         invoke(RepeatArgument) { mode ->
             event.guildId.ifPresent { guild ->
-                music[guild.asString()]?.playlist?.repeat(mode)
+                //music[guild.asString()]?.playlist?.repeat(mode)
             }
         }
     }
@@ -90,9 +96,12 @@ fun musicCommands(music: MusicManager) = module("music") {
         alias("random")
 
         invoke {
-            event.guildId.ifPresent { id ->
-                music[id.asString()]?.playlist?.shuffle()
-            }
+            val guild = guild.awaitSingle()
+
+            Mono.justOrEmpty(music.getGuildMusic(guild.id))
+                    .doOnNext { guildMusic ->
+                        guildMusic.playlist.shuffle()
+                    }.awaitSingle()
         }
     }
 
@@ -100,24 +109,16 @@ fun musicCommands(music: MusicManager) = module("music") {
         alias("leave")
 
         invoke {
-            val guild = event.guildId.get()
+            val guild = guild.awaitSingle()
 
-            music[guild.asString()]?.let {
-                Mono.just(event.message.client)
-                    .map { it.voiceConnectionRegistry }
-                    .flatMap { it.getVoiceConnection(guild) }
-                    .flatMap(VoiceConnection::disconnect)
-                    .subscribe()
-
-                music.remove(guild.asString())
-            }
+            music.destroyConnection(guild.id).awaitSingle()
         }
     }
 
     command("volume") {
 
         invoke(IntArgument) { volume ->
-            val guild = event.guildId.get().asString()
+            val guild = guild.awaitSingle()
 
             // TODO: Falta este comando uwu
         }
@@ -127,11 +128,12 @@ fun musicCommands(music: MusicManager) = module("music") {
         alias("clear")
 
         invoke {
-            val guild = event.guildId.get().asString()
+            val guild = guild.awaitSingle()
 
-            music[guild]?.let {
-                it.playlist.clear()
-            }
+            Mono.justOrEmpty(music.getGuildMusic(guild.id))
+                    .doOnNext { guildMusic ->
+                        guildMusic.playlist.clear()
+                    }.then()
         }
     }
 
@@ -139,45 +141,38 @@ fun musicCommands(music: MusicManager) = module("music") {
         alias("queue")
 
         invoke(OptionalIntArgument) { _page ->
-            val guild = event.guildId.get().asString()
+            val guild = guild.awaitSingle()
 
-            music[guild]?.let {
-                if (it.playlist.isEmpty()) {
-                    respond("Empty playlist")
-                    return@invoke
-                }
+            Mono.justOrEmpty(music.getGuildMusic(guild.id))
+                    .asFlow()
+                    .collect { guildMusic ->
+                        if (guildMusic.playlist.isEmpty()) {
+                            respond("Empty playlist")
+                        } else {
+                            val itemsPerPage = 10
+                            var pages = ceil((guildMusic.playlist.size() / itemsPerPage).toDouble()).toInt()
 
-                val itemsPerPage = 10
-                var pages = ceil((it.playlist.size() / itemsPerPage).toDouble()).toInt()
+                            if (pages == 0)
+                                pages = 1
 
-                if (pages == 0)
-                    pages = 1
+                            val page = (_page ?: 1).toString().toInt()
 
-                val page = (_page ?: 1).toString().toInt()
+                            val start = (page - 1) * itemsPerPage
+                            val end = start + itemsPerPage
+                            val playlist = guildMusic.playlist.getPlaylist().toList()
 
-                var start = (page - 1) * itemsPerPage
-                val end = start + itemsPerPage
-                val iterator = it.playlist.iterator()
+                            var queue = ""
 
-                var i = 0
+                            for (i in start until end) {
+                                queue += "**${i+1}**. [${playlist[i].info.author} - ${playlist[i].info.title}](${playlist[i].info.uri})\n"
+                            }
 
-                while (i < start) {
-                    iterator.next()
-                    i += 1
-                }
-
-                var queue = ""
-                while (start < end && iterator.hasNext()) {
-                    val data = iterator.next()
-                    queue += "`${start + 1}.` [**${data.info.title}**](${data.info.uri})\n"
-                    start += 1
-                }
-
-                respondEmbed {
-                    setDescription("**${it.playlist.size()} tracks:**\n\n${queue}")
-                    setFooter("Viewing page ${page}/${pages}", null)
-                }
-            }
+                            respondEmbed {
+                                setDescription("**${guildMusic.playlist.size()} tracks:**\n\n${queue}")
+                                setFooter("Viewing page ${page}/${pages}", null)
+                            }
+                        }
+                    }
         }
     }
 }
