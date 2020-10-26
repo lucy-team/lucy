@@ -23,6 +23,7 @@ allprojects {
         mavenCentral()
         mavenLocal()
         maven { url = uri("https://kotlin.bintray.com/ktor") }
+        maven { url = uri("https://jitpack.io") }
     }
 }
 
