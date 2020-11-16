@@ -10,6 +10,7 @@ allprojects {
 
     ext {
         set("ktorVersion", "1.4.1")
+        set("kordVersion", "0.6.9")
         set("logbackVersion", "1.2.1")
         set("exposedVersion", "0.28.1")
         set("postgresqlVersion", "42.2.1")
@@ -24,6 +25,7 @@ allprojects {
         mavenLocal()
         maven { url = uri("https://kotlin.bintray.com/ktor") }
         maven { url = uri("https://jitpack.io") }
+        maven { url = uri("https://dl.bintray.com/kordlib/Kord") }
     }
 }
 

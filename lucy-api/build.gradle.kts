@@ -4,6 +4,7 @@ val kodeinVersion: String by ext
 val postgresqlVersion: String by ext
 val hikariVersion: String by ext
 val exposedVersion: String by ext
+val kordVersion: String by ext
 
 plugins {
     application
@@ -26,6 +27,8 @@ dependencies {
     implementation("org.kodein.di:kodein-di-framework-ktor-server-jvm:$kodeinVersion")
     implementation("com.zaxxer:HikariCP:$hikariVersion") // JDBC Connection Pool
     implementation("org.postgresql:postgresql:$postgresqlVersion") // JDBC Connector for PostgreSQL
+
+    implementation("com.gitlab.kordlib.kord:kord-rest:$kordVersion")
 
     implementation("org.jetbrains.exposed:exposed-core:$exposedVersion")
     implementation("org.jetbrains.exposed:exposed-dao:$exposedVersion")

@@ -1,6 +1,8 @@
 package cl.lucy.tea
 
+import cl.lucy.tea.route.guild
 import cl.lucy.tea.route.member
+import cl.lucy.tea.route.role
 import cl.lucy.tea.service.bindServices
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
@@ -52,6 +54,8 @@ fun Application.module() {
     routing {
         route("/api/v1") {
             member()
+            role()
+            guild()
         }
 
         get("uuid") {

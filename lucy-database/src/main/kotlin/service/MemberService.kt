@@ -16,9 +16,8 @@ class MemberService {
         MemberEntity.all().map(MemberEntity::asMember)
     }
 
-    suspend fun new(guildId: UUID, member: Member): Member = newSuspendedTransaction {
-        MemberEntity.new {
-            discordId = member.discordId
+    suspend fun new(guildId: Long, member: Member): Member = newSuspendedTransaction {
+        MemberEntity.new(member.id) {
             username = member.username
             avatarUrl = member.avatarUrl
             name = member.name
@@ -26,21 +25,18 @@ class MemberService {
         }.asMember()
     }
 
-    suspend fun delete(id: UUID) = newSuspendedTransaction {
+    suspend fun delete(id: Long) = newSuspendedTransaction {
         MemberEntity[id].delete()
     }
 
-    suspend fun get(id: UUID): Member = newSuspendedTransaction {
+    suspend fun get(id: Long): Member = newSuspendedTransaction {
         MemberEntity[id].asMember()
     }
 
     suspend fun update(member: Member): Member = newSuspendedTransaction {
-        if (member.id == null)
-            throw Exception("No se ha especificado el id del miembro")
-
         val id = member.id
+
         MemberEntity[id].apply {
-            discordId = member.discordId
             username = member.username
             avatarUrl = member.avatarUrl
             name = member.name
