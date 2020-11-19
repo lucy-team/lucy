@@ -28,6 +28,8 @@ import kotlinx.coroutines.reactive.awaitFirst
 
 val dotenv = dotenv {
     filename = ".env"
+    ignoreIfMissing = true
+    systemProperties = true
 }
 
 suspend fun main() = bot(dotenv["BOT_TOKEN"]) {
