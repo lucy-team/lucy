@@ -1,4 +1,4 @@
 rootProject.name = "lucy"
 include("lucy-api")
-include("lucy-common")
+include("lucy-database")
 include("lucy-bot")

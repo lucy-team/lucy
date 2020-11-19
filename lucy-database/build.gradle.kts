@@ -1,9 +1,5 @@
 val exposedVersion: String by ext
 
-plugins {
-    kotlin("jvm")
-}
-
 dependencies {
     implementation(kotlin("stdlib"))
 
