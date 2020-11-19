@@ -50,6 +50,21 @@ subprojects {
     apply(plugin = "kotlin")
     apply(plugin = "kotlin-kapt")
 
+    task("stage") {
+        dependsOn.add("build")
+        dependsOn.add("copyToLib")
+    }
+
+    task("copyToLib") {
+        doLast {
+            copy {
+                into("$buildDir/libs")
+                from(configurations.compile)
+            }
+        }
+    }
+
+
     tasks.withType<KotlinCompile> {
         kotlinOptions {
             freeCompilerArgs = listOf("-Xjsr305=strict")

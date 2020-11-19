@@ -1,1 +1,1 @@
-worker: java -jar target\lucy-bot.jar
+worker: java -jar lucy-bot/build/libs/lucy-bot-1.0-SNAPSHOT.jar
