@@ -4,6 +4,7 @@ package modules
 
 import com.gitlab.kordlib.kordx.commands.annotation.AutoWired
 import com.gitlab.kordlib.kordx.commands.model.command.invoke
+import command.HelpKey
 import command.module.module
 import discord4j.rest.util.Color
 import io.ktor.client.*
@@ -16,6 +17,8 @@ import kotlinx.serialization.json.jsonPrimitive
 fun funCommands(client: HttpClient) = module("fun") {
 
     command("cat") {
+        metaData[HelpKey] = "Muestra la foto de un gatito owo."
+
         invoke {
             val msg = respond("Buscando gatito owo...")
 
@@ -34,6 +37,8 @@ fun funCommands(client: HttpClient) = module("fun") {
     }
 
     command("dog") {
+        metaData[HelpKey] = "Muestra la foto de un perrito owo."
+
         invoke {
             val msg = respond("Buscando perrito owo...")
 

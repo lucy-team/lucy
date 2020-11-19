@@ -12,6 +12,8 @@ import java.util.function.Consumer
 
 fun generalCommands() = module("general") {
     command("help") {
+        metaData[HelpKey] = "Este mensaje."
+
         invoke {
             var count = 1
             val embed = Consumer<EmbedCreateSpec> { embed ->

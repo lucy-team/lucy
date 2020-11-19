@@ -23,7 +23,7 @@ import java.lang.String.format
 fun musicCommands(music: MusicManager) = module("music") {
 
     command("play") {
-        this.metaData[HelpKey] = "poner una musica owo"
+        metaData[HelpKey] = "[url] Se conecta al canal de voz y reproduce la musica."
 
         invoke(StringArgument) { url ->
             val guild = guild.awaitSingle()
@@ -45,6 +45,8 @@ fun musicCommands(music: MusicManager) = module("music") {
     command("pause") {
         alias("resume")
 
+        metaData[HelpKey] = "Pausa o continua la repoducción de la musica."
+
         invoke {
             val guild = guild.awaitSingle()
 
@@ -57,6 +59,8 @@ fun musicCommands(music: MusicManager) = module("music") {
 
     command("skip") {
         alias("next", "jump")
+
+        metaData[HelpKey] = "[numero (opcional)] Avanza a la siguiente musica o al numero que se le indica."
 
         invoke(OptionalIntArgument) { idx ->
             val guild = guild.awaitSingle()
@@ -74,13 +78,18 @@ fun musicCommands(music: MusicManager) = module("music") {
 
 
     command("current") {
+        metaData[HelpKey] = "Muestra el titulo de la musica en reproducción actual."
+
         invoke {
             val guild = guild.awaitSingle()
 
             Mono.justOrEmpty(music.getGuildMusic(guild.id))
                 .map { guildMusic ->
                     val track = guildMusic.playlist.getCurrent()
-                    return@map format("Currently playing: **%s**", trackName(track!!.info))
+                    if (track == null)
+                        return@map "No hay musica en reproducción."
+                    else
+                        return@map format("Musica reproducción: **%s**", trackName(track.info))
                 }.collect {
                     respondEmbed {
                         setDescription(it)
@@ -93,6 +102,8 @@ fun musicCommands(music: MusicManager) = module("music") {
 
     command("loop") {
         alias("repeat")
+
+        metaData[HelpKey] = "[modo (SONG, NONE)] Pone en repetición una musica."
 
         invoke(RepeatArgument) { mode ->
             val guild = guild.awaitSingle()
@@ -109,6 +120,8 @@ fun musicCommands(music: MusicManager) = module("music") {
     command("shuffle") {
         alias("random")
 
+        metaData[HelpKey] = "Reordena de manera aleatoria la playlist."
+
         invoke {
             val guild = guild.awaitSingle()
 
@@ -123,6 +136,8 @@ fun musicCommands(music: MusicManager) = module("music") {
     command("stop") {
         alias("leave", "exit")
 
+        metaData[HelpKey] = "El bot termina la reproducción de la musica y sale del canal de voz."
+
         invoke {
             val guild = guild.awaitSingle()
 
@@ -131,6 +146,8 @@ fun musicCommands(music: MusicManager) = module("music") {
     }
 
     command("volume") {
+
+        metaData[HelpKey] = "[numero] Asigna el volumen al reproductor."
 
         invoke(IntArgument) { volume ->
             if (volume < 1 || volume > 100) {
@@ -151,6 +168,8 @@ fun musicCommands(music: MusicManager) = module("music") {
     command("clean") {
         alias("clear")
 
+        metaData[HelpKey] = "Elimina la playlist."
+
         invoke {
             val guild = guild.awaitSingle()
 
@@ -164,6 +183,8 @@ fun musicCommands(music: MusicManager) = module("music") {
 
     command("playlist") {
         alias("queue")
+
+        metaData[HelpKey] = "[numero (pagina opcional)] Muestra la cola actual del reproductor."
 
         invoke(OptionalIntArgument) { _page ->
             val guild = guild.awaitSingle()
