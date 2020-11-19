@@ -53,11 +53,11 @@ class LucyErrorHandler(
     override suspend fun CommandProcessor.notFound(event: MessageCreateEvent, command: String) {
         val mostProbable = suggester.suggest(command, commands)
         if (mostProbable == null) {
-            event.message.channel.awaitSingle().createMessage("$command is not an existing command")
+            event.message.channel.awaitSingle().createMessage("$command este comando no existe")
             return
         }
 
-        event.message.channel.awaitSingle().createMessage("$command not found, did you mean ${mostProbable.name}?")
+        event.message.channel.awaitSingle().createMessage("$command no existe, quizas sea este ${mostProbable.name}?")
     }
 
     override suspend fun CommandProcessor.rejectArgument(
@@ -73,7 +73,7 @@ class LucyErrorHandler(
             event,
             eventText,
             eventText.length + 1, //+1 since we're expecting stuff after the text
-            "Too many arguments, reached end of command parsing."
+            "Demasiados argumentos para el comando, revisa el comando help para más ayuda."
         )
     }
 }
