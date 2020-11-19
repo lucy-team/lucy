@@ -6,12 +6,17 @@ import com.sedmelluq.discord.lavaplayer.player.AudioPlayer
 import com.sedmelluq.discord.lavaplayer.player.event.AudioEventAdapter
 import com.sedmelluq.discord.lavaplayer.track.AudioTrack
 import com.sedmelluq.discord.lavaplayer.track.AudioTrackState
+import util.pluralOf
+import util.trackName
+import java.lang.String.format
 import java.util.*
 import java.util.concurrent.BlockingDeque
 import java.util.concurrent.LinkedBlockingDeque
 import java.util.concurrent.LinkedBlockingQueue
+import kotlin.math.ceil
+import kotlin.time.ExperimentalTime
 
-class Playlist(val player: AudioPlayer): AudioEventAdapter() {
+class Playlist(val player: AudioPlayer) : AudioEventAdapter() {
 
     enum class RepeatMode {
         NONE,
@@ -23,7 +28,7 @@ class Playlist(val player: AudioPlayer): AudioEventAdapter() {
 
     private var current: AudioTrack? = null
 
-    private var repeatMode: RepeatMode = RepeatMode.NONE
+    var repeatMode: RepeatMode = RepeatMode.NONE
 
     fun queue(track: AudioTrack, first: Boolean): Boolean {
         return when {
@@ -105,6 +110,52 @@ class Playlist(val player: AudioPlayer): AudioEventAdapter() {
 
     fun setVolume(volume: Int) {
         this.player.volume = volume
+    }
+
+    fun getCurrent(): AudioTrack? {
+        return current
+    }
+
+    fun asString(_page: Int?): String {
+        if (queue.isEmpty()) {
+            return "**La playlist esta vacia.**"
+        }
+
+        if (_page != null) {
+            if (_page <= 0)
+                return "**Solo se permiten paginas mayores a 0.**"
+        }
+
+        val itemsPerPage = 10
+        var pages = ceil((queue.size / itemsPerPage).toDouble()).toInt()
+
+        if (pages == 0)
+            pages = 1
+
+        var page = (_page ?: 1)
+
+        if (page > pages)
+            page = pages
+
+        val playlistStr = StringBuilder("**Playlist**\n")
+
+        val start = (page - 1) * itemsPerPage
+        var end = start + itemsPerPage
+
+        if (end >= queue.size)
+            end = queue.size
+
+        val playlist = getPlaylist().toList()
+
+        for (i in start until end) {
+            val name = format("%n\t**%d.** [%s](%s)",
+                i + 1, trackName(playlist[i].info), playlist[i].info.uri)
+            playlistStr.append(name)
+        }
+
+        playlistStr.append("\nPaginas ${page}/${pages}")
+
+        return playlistStr.toString()
     }
 
 }

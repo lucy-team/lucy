@@ -55,7 +55,7 @@ class AudioLoadResultListener(
     override fun loadFailed(exception: FriendlyException?) {
         Mono.justOrEmpty(musicManager.getGuildMusic(guildId))
             .flatMap { guildMusic ->
-                guildMusic.channel.flatMap { it.createMessage("No se pudo cargar la musica") }
+                guildMusic.channel.flatMap { it.createMessage("No se pudo cargar la musica $exception") }
             }
             .then(terminate())
             .subscribeOn(Schedulers.boundedElastic())

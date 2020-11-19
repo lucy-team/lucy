@@ -43,7 +43,7 @@ class GuildMusic(
         return leavingTask.get() != null && !leavingTask.get()!!.isDisposed
     }
 
-    fun addAudioLoadResultListener(listener: AudioLoadResultListener, url: String) {
+    private fun addAudioLoadResultListener(listener: AudioLoadResultListener, url: String) {
         listeners[listener] = musicManager.loadItemOrdered(guildId.asLong(), url, listener)
     }
 

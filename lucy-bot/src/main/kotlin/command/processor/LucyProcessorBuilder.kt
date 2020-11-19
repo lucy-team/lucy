@@ -1,8 +1,8 @@
 package command.processor
 
 import bot.Lucy
-import com.gitlab.kordlib.kordx.commands.model.processor.CommandProcessor
-import com.gitlab.kordlib.kordx.commands.model.processor.ProcessorBuilder
+import com.gitlab.kordlib.kordx.commands.model.plug.PlugContainer
+import com.gitlab.kordlib.kordx.commands.model.processor.*
 
 class LucyProcessorBuilder(val lucy: Lucy) : ProcessorBuilder() {
 

@@ -1,7 +1,22 @@
+import kotlinx.atomicfu.plugin.gradle.sourceSets
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
+buildscript {
+    repositories {
+        jcenter()
+        maven(url = "https://plugins.gradle.org/m2/")
+    }
+
+    dependencies {
+        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.4.10")
+        classpath("org.jetbrains.kotlin:kotlin-serialization:1.4.10")
+        classpath("com.jfrog.bintray.gradle:gradle-bintray-plugin:1.8.5")
+        classpath("org.jetbrains.kotlinx:atomicfu-gradle-plugin:0.14.4")
+    }
+}
+
 plugins {
-    kotlin("jvm") version "1.4.10" apply false
+    id("org.jetbrains.kotlin.jvm") version "1.4.10"
 }
 
 allprojects {
@@ -29,6 +44,7 @@ allprojects {
     }
 }
 
+
 subprojects {
     apply(plugin = "java")
     apply(plugin = "kotlin")
@@ -36,10 +52,7 @@ subprojects {
 
     tasks.withType<KotlinCompile> {
         kotlinOptions {
-            freeCompilerArgs = listOf("-Xjsr305=strict",
-                "-XXLanguage:+InlineClasses",
-                "-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-                "-Xopt-in=kotlin.Experimental")
+            freeCompilerArgs = listOf("-Xjsr305=strict")
             jvmTarget = "1.8"
             incremental = false
         }
