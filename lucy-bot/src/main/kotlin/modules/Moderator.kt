@@ -10,6 +10,7 @@ import command.argument.MemberArgument
 import command.module.module
 import kotlinx.coroutines.reactive.awaitFirst
 import kotlinx.coroutines.reactive.awaitSingle
+import kotlinx.coroutines.reactive.collect
 
 fun moderatorCommands() = module("moderator") {
 
@@ -69,8 +70,8 @@ fun moderatorCommands() = module("moderator") {
         metaData[HelpKey] = "[numero (cantidad)] Elimina una cantidad de mensajes del canal de texto."
 
         invoke(IntArgument) { cant ->
-            if (cant < 0 || cant > 10000) {
-                respond("La cantidad de mensajes a eliminar deber ser mayor a 0 y menor a 10000")
+            if (cant <= 0 || cant >= 100) {
+                respond("La cantidad de mensajes a eliminar deber ser mayor a 0 y menor a 100")
                 return@invoke
             }
 
