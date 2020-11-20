@@ -25,7 +25,7 @@ class AudioLoadResultListener(
             .filter { guildMusic -> !guildMusic.playlist.queue(track!!, insertFirst) }
             .flatMap(GuildMusic::channel)
             .flatMap { channel ->
-                channel.createMessage("Musica agregada")
+                channel.createMessage("Musica agregada en la cola")
             }
             .then(terminate())
             .subscribeOn(Schedulers.boundedElastic())
@@ -55,7 +55,7 @@ class AudioLoadResultListener(
     override fun loadFailed(exception: FriendlyException?) {
         Mono.justOrEmpty(musicManager.getGuildMusic(guildId))
             .flatMap { guildMusic ->
-                guildMusic.channel.flatMap { it.createMessage("No se pudo cargar la musica $exception") }
+                guildMusic.channel.flatMap { it.createMessage("No se pudo cargar la musica :c") }
             }
             .then(terminate())
             .subscribeOn(Schedulers.boundedElastic())

@@ -36,8 +36,11 @@ fun musicCommands(music: MusicManager) = module("music") {
                         .flatMap { guildMusic ->
                             guildMusic.play(author.id, url, message.channelId.asLong())
                         }
-                }.doOnError {
-                    println(it)
+                }.doOnError { error ->
+                    message.channel
+                        .flatMap {
+                            it.createMessage(error.message ?: "Upps hubo un error.")
+                        }
                 }.awaitSingle()
         }
     }

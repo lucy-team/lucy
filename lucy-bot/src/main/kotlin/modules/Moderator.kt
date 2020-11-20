@@ -17,8 +17,8 @@ fun moderatorCommands() = module("moderator") {
         metaData[HelpKey] = "[@miembro] Elimina un miembro del servidor."
 
         invoke(MemberArgument) { member ->
-            member.kick().awaitFirst()
             respond("El miembro ha sido expulsado.")
+            member.kick().awaitFirst()
         }
     }
 
@@ -26,11 +26,11 @@ fun moderatorCommands() = module("moderator") {
         metaData[HelpKey] = "[@miembro] Banea a un miembro del servidor."
 
         invoke(MemberArgument) { member ->
+            respond("El miembro ha sido baneado.")
+
             member.ban {
                 it.setDeleteMessageDays(7)
             }.awaitFirst()
-
-            respond("El miembro ha sido baneado.")
         }
     }
 
@@ -38,8 +38,8 @@ fun moderatorCommands() = module("moderator") {
         metaData[HelpKey] = "[@miembro] Desbanea a un miembro del servidor."
 
         invoke(MemberArgument) { member ->
-            member.unban().awaitFirst()
             respond("El miembro ha sido desbaneado.")
+            member.unban().awaitFirst()
         }
     }
 

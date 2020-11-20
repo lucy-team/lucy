@@ -62,7 +62,7 @@ class GuildMusic(
             .getVoiceConnection(guildId)
             .flatMap { vc -> vc.disconnect() }
             .then(channel)
-            .flatMap { channel -> channel.createMessage("Se acabo la playlist uwu.") }
+            .flatMap { channel -> channel.createMessage("No hay más musica en la playlist que reproducir.") }
             .then()
     }
 
